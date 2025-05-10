@@ -1,0 +1,16 @@
+
+local name = arg[1] or "World"
+local count = tonumber(arg[2]) or 1
+
+for i = 1, count do
+    print("Hello " .. name)
+end
+
+
+# Dockerfile
+FROM lua:5.4
+
+WORKDIR /app
+COPY hello.lua .
+
+CMD ["lua", "hello.lua"]

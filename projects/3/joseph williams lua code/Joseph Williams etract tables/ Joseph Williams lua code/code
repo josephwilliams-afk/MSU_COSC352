@@ -1,0 +1,39 @@
+local http = require("socket.http")
+local ltn12 = require("ltn12")
+local lfs = require("lfs")
+
+
+local function download_html(url)
+    local response_body = {}
+    http.request{
+        url = url,
+        sink = ltn12.sink.table(response_body)
+    }
+    return table.concat(response_body)
+end
+
+
+local function extract_tables(html)
+    local tables = {}
+    for table in html:gmatch("<table.-</table>") do
+        table.insert(tables, table)
+    end
+
+    for i, tbl in ipairs(tables) do
+        local csv_file = io.open("table_" .. i .. ".csv", "w")
+        for row in tbl:gmatch("<tr.-</tr>") do
+            local csv_row = {}
+            for cell in row:gmatch("<t[dh].-</t[dh]>") do
+                local content = cell:gsub("<.->", ""):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
+                table.insert(csv_row, content)
+            end
+            csv_file:write(table.concat(csv_row, ",") .. "\n")
+        end
+        csv_file:close()
+    end
+end
+
+-- Main execution
+local url = "https://en.wikipedia.org/wiki/List_of_largest_companies_in_the_United_States_by_revenue"
+local html = download_html(url)
+extract_tables(html)
